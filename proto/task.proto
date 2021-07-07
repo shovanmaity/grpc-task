@@ -1,0 +1,63 @@
+syntax = "proto3";
+option go_package = "gen/go/v1";
+
+import "google/api/annotations.proto";
+
+message ProfileMessage {
+	string username = 1;
+	string name = 2;
+	string email = 3;
+}
+
+message CredentialMessage {
+	string username = 1;
+	string password = 2;
+}
+
+message EmptyMessage {}
+
+message TokenMessage {
+	string jwt = 1;
+}
+
+service LoginService {
+	rpc Register(CredentialMessage) returns(TokenMessage){
+		option (google.api.http) = {
+			post: "/api/v1/registration"
+			body: "*"
+		};
+	}
+	rpc Login(CredentialMessage) returns(TokenMessage){
+		option (google.api.http) = {
+			post: "/api/v1/login"
+			body: "*"
+		};
+	}
+	rpc Logout(EmptyMessage) returns(EmptyMessage){
+		option (google.api.http) = {
+			delete: "/api/v1/logout"
+		};
+	}
+}
+
+service ProfileService {
+	rpc GetProfile(ProfileMessage) returns (ProfileMessage) {
+		option (google.api.http) = {
+			get: "/api/v1/{username}/profile"
+		};
+	}
+	rpc UpdateProfile(ProfileMessage) returns (ProfileMessage) {
+		option (google.api.http) = {
+			put: "/api/v1/{username}/profile"
+			body: "*"
+		};
+	}
+}
+
+service PingService {
+	rpc Ping(EmptyMessage) returns (EmptyMessage) {
+		option (google.api.http) = {
+			get: "/ping"
+		};
+	}
+}
