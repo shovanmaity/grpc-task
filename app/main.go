@@ -12,16 +12,20 @@ import (
 	"github.com/shovanmaity/grpc-task/app/interceptor"
 	"github.com/shovanmaity/grpc-task/app/server"
 	"github.com/shovanmaity/grpc-task/app/store"
+	"github.com/shovanmaity/grpc-task/app/types"
 	generated "github.com/shovanmaity/grpc-task/gen/go"
 )
 
 func main() {
-	listener, err := net.Listen("tcp", ":8080")
-	if err != nil {
-		logrus.Fatalf("Failed to listen on port 8080, error : %s", err)
-	}
-	db := store.NewStore()
+	serverPort := types.ServerPort()
+	gatewayPort := types.GatewayPort()
 
+	listener, err := net.Listen("tcp", ":"+serverPort)
+	if err != nil {
+		logrus.Fatalf("Failed to listen on port %s, error : %s", serverPort, err)
+	}
+
+	db := store.New()
 	inc := interceptor.New(db)
 
 	pingSRV := server.NewPingServer()
@@ -31,20 +35,21 @@ func main() {
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(inc.UnaryServerInterceptor()),
 	)
+
 	generated.RegisterPingServiceServer(s, pingSRV)
 	generated.RegisterLoginServiceServer(s, loginSRV)
 	generated.RegisterProfileServiceServer(s, profileSRV)
 
-	logrus.Println("Starting gRPC server on 8080 port")
+	logrus.Infof("Starting gRPC server on %s port", serverPort)
 	go func() {
 		logrus.Fatal(s.Serve(listener))
 	}()
 
 	conn, err := grpc.DialContext(context.Background(),
-		":8080", grpc.WithBlock(), grpc.WithInsecure(),
+		":"+serverPort, grpc.WithBlock(), grpc.WithInsecure(),
 	)
 	if err != nil {
-		logrus.Fatalf("Failed to dial server, error : %s", err)
+		logrus.Fatalf("Failed to dial , error : %s", err)
 	}
 
 	smux := runtime.NewServeMux()
@@ -59,10 +64,10 @@ func main() {
 	}
 
 	gwServer := &http.Server{
-		Addr:    ":8090",
+		Addr:    ":" + gatewayPort,
 		Handler: smux,
 	}
 
-	logrus.Info("Serving gRPC-Gateway on 8090 port")
+	logrus.Infof("Serving gRPC gateway on %s port", gatewayPort)
 	logrus.Fatal(gwServer.ListenAndServe())
 }

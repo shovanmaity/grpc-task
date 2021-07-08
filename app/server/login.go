@@ -29,12 +29,12 @@ func NewLoginServer(db *store.Store) *LoginServer {
 }
 func (lc *LoginServer) Register(ctx context.Context, cred *generated.CredentialMessage) (*generated.TokenMessage, error) {
 	if err := lc.Store.InsertToken(cred); err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	if _, err := lc.Store.InsertProfile(&generated.ProfileMessage{Username: cred.Username}); err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	session := lc.Store.GetSession(cred.Username)
+	session := lc.Store.SetAndGetSession(cred.Username)
 	claim := types.JWTClaim{
 		UserName:  cred.Username,
 		SessionID: session,
@@ -44,7 +44,7 @@ func (lc *LoginServer) Register(ctx context.Context, cred *generated.CredentialM
 	}
 	jwtString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(types.JWTSigningSecret()))
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	return &generated.TokenMessage{Jwt: jwtString}, nil
 }
@@ -52,12 +52,12 @@ func (lc *LoginServer) Login(ctx context.Context, cred *generated.CredentialMess
 	token := string(md5.New().Sum([]byte(cred.Username + ":" + cred.Password)))
 	tokenInDB, err := lc.Store.GetToken(cred.Username)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	if token != tokenInDB {
 		return nil, fmt.Errorf("username or password mismatch")
 	}
-	session := lc.Store.GetSession(cred.Username)
+	session := lc.Store.SetAndGetSession(cred.Username)
 	claim := types.JWTClaim{
 		UserName:  cred.Username,
 		SessionID: session,
@@ -67,7 +67,7 @@ func (lc *LoginServer) Login(ctx context.Context, cred *generated.CredentialMess
 	}
 	jwtString, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(types.JWTSigningSecret()))
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	return &generated.TokenMessage{Jwt: jwtString}, nil
 }

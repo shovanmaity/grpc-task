@@ -18,6 +18,8 @@ import (
 var unauthenticatedFullMethods map[string]int = make(map[string]int)
 
 func init() {
+	unauthenticatedFullMethods["/PingService/Ping"] = 0
+
 	unauthenticatedFullMethods["/LoginService/Register"] = 0
 	unauthenticatedFullMethods["/LoginService/Login"] = 0
 	unauthenticatedFullMethods["/LoginService/Logout"] = 0
@@ -34,6 +36,7 @@ func New(db *store.Store) *Interceptor {
 	}
 }
 
+// UnaryServerInterceptor validates auth token for restricted URLs
 func (inc *Interceptor) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler) (resp interface{}, err error) {

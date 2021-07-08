@@ -10,17 +10,18 @@ import (
 	generated "github.com/shovanmaity/grpc-task/gen/go"
 )
 
-func NewStore() *Store {
+// New returns a new instance of Store
+func New() *Store {
 	st := &Store{
 		mu:       sync.Mutex{},
 		profiles: make(map[string]*generated.ProfileMessage),
 		tokens:   make(map[string]string),
 		sessions: make(map[string]string),
 	}
-	st.InsertProfile(&generated.ProfileMessage{Username: "shovan", Name: "Kuchbhi", Email: "test@gmail.com"})
 	return st
 }
 
+// In memory store for the application
 type Store struct {
 	mu       sync.Mutex
 	profiles map[string]*generated.ProfileMessage
@@ -28,6 +29,7 @@ type Store struct {
 	sessions map[string]string
 }
 
+// InsertProfile adds a new profile in data store
 func (s *Store) InsertProfile(profile *generated.ProfileMessage) (*generated.ProfileMessage, error) {
 	if profile == nil {
 		return nil, fmt.Errorf("got nil object")
@@ -38,6 +40,7 @@ func (s *Store) InsertProfile(profile *generated.ProfileMessage) (*generated.Pro
 	return profile, nil
 }
 
+// UpdateProfile updates a profile in the store
 func (s *Store) UpdateProfile(id string, profile *generated.ProfileMessage) (*generated.ProfileMessage, error) {
 	if profile == nil {
 		return nil, fmt.Errorf("got nil object")
@@ -51,6 +54,7 @@ func (s *Store) UpdateProfile(id string, profile *generated.ProfileMessage) (*ge
 	return profile, nil
 }
 
+// GetProfile returns a profile from the store
 func (s *Store) GetProfile(id string) (*generated.ProfileMessage, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -61,6 +65,7 @@ func (s *Store) GetProfile(id string) (*generated.ProfileMessage, error) {
 	return profile, nil
 }
 
+// InsertToken adds a token in the store
 func (s *Store) InsertToken(cred *generated.CredentialMessage) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -69,10 +74,10 @@ func (s *Store) InsertToken(cred *generated.CredentialMessage) error {
 	}
 	s.tokens[cred.Username] = string(md5.New().
 		Sum([]byte(cred.Username + ":" + cred.Password)))
-	fmt.Println(s.tokens[cred.Username])
 	return nil
 }
 
+// GetToken gets a token from the store
 func (s *Store) GetToken(username string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -82,7 +87,8 @@ func (s *Store) GetToken(username string) (string, error) {
 	return s.tokens[username], nil
 }
 
-func (s *Store) GetSession(username string) string {
+// SetAndGetSession sets a new session if not and returns sessionID for a user
+func (s *Store) SetAndGetSession(username string) string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.sessions[username] == "" {
@@ -91,12 +97,14 @@ func (s *Store) GetSession(username string) string {
 	return s.sessions[username]
 }
 
+// RemoveSession removes sessionID for given user from the store
 func (s *Store) RemoveSession(username string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.sessions, username)
 }
 
+// IsValidSession checks if session and username is  valid or not
 func (s *Store) IsValidSession(username, session string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
