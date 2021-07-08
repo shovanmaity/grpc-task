@@ -2,12 +2,26 @@
 
 ### Clone the repo
 ```bash
-git clone --recurse-submodules --remote-submodules git@github.com:shovanmaity/grpc-task.git
+git clone --recurse-submodules --remote-submodules https://github.com/shovanmaity/grpc-task.git
 cd grpc-task
 ```
 ### Run the app
 ```bash
 make run
+```
+### Get profile without auth header
+```bash
+curl http://0.0.0.0:8090/api/v1/shovan/profile
+```
+```json
+{"code":16,"message":"authorization token not found","details":[]}
+```
+### Update profile without auth header
+```bash
+curl -X PUT http://0.0.0.0:8090/api/v1/shovan/profile -d '{"name":"Shovan Maity", "email":"shovan.cse91+1@gmail.com"}'
+```
+```json
+{"code":16,"message":"authorization token not found","details":[]}
 ```
 ### Registration
 ```bash
@@ -23,10 +37,6 @@ curl -X POST http://localhost:8090/api/v1/login -d '{"username":"shovan", "passw
 ```
 ```json
 {"jwt":"JWT_TOKEN"}
-```
-### Logout
-```bash
-curl -X DELETE http://localhost:8090/api/v1/logout -H "authorization: Token ${JWT_TOKEN}"
 ```
 ### Get profile
 ```bash
@@ -46,7 +56,10 @@ curl http://0.0.0.0:8090/api/v1/shovan/profile -H "Authorization: Token ${JWT_TO
 ```json
 {"username":"shovan", "name":"Shovan Maity", "email":"shovan.cse91@gmail.com"}
 ```
-
+### Logout
+```bash
+curl -X DELETE http://localhost:8090/api/v1/logout -H "authorization: Token ${JWT_TOKEN}"
+```
 ### Get profile after logout
 ```bash
 curl http://0.0.0.0:8090/api/v1/shovan/profile -H "Authorization: Token ${JWT_TOKEN}"
@@ -60,19 +73,4 @@ curl -X PUT http://0.0.0.0:8090/api/v1/shovan/profile -H "Authorization: Token $
 ```
 ```json
 {"code":16, "message":"invalid session", "details":[]}
-```
-
-### Get profile without auth header
-```bash
-curl http://0.0.0.0:8090/api/v1/shovan/profile
-```
-```json
-{"code":16,"message":"authorization token not found","details":[]}
-```
-### Update profile without auth header
-```bash
-curl -X PUT http://0.0.0.0:8090/api/v1/shovan/profile -d '{"name":"Shovan Maity", "email":"shovan.cse91+1@gmail.com"}'
-```
-```json
-{"code":16,"message":"authorization token not found","details":[]}
 ```
